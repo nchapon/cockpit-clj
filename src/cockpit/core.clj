@@ -4,7 +4,8 @@
             [ring.middleware.defaults :refer :all]
             [compojure.handler :only [site]]
             [org.httpkit.server :refer [run-server]]
-            [ring.util.response :as resp]))
+            [ring.util.response :as resp]
+            [selmer.parser :refer [render-file]]))
 
 (defn foo
   "I don't do a whole lot."
@@ -13,6 +14,8 @@
 
 (defroutes all-routes
   (GET "/" [] (resp/resource-response "index.html" {:root "public"}))
+  (GET "/home" [] (render-file "templates/home.html" {}))
+  (GET "/login" [] (render-file "templates/login.html" {}))
   (route/resources "/")
   (route/not-found "Page not found")) ;; resources should be in resources/public folder
 

@@ -1,0 +1,15 @@
+{% extends "templates/base.html" %}
+{% block main %}
+<h3>Authentification</h3>
+<form>
+    <div class="form-group">
+        <label for="userLogin">Login</label>
+        <input type="email" class="form-control" id="userLogin" placeholder="Login">
+    </div>
+    <div class="form-group">
+        <label for="userPassword">Mot de passe</label>
+        <input type="password" class="form-control" id="userPassword" placeholder="Mot de passe">
+    </div>
+    <button type="submit" class="btn btn-default">Se connecter</button>
+</form>
+{% endblock %}
