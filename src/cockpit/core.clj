@@ -7,11 +7,6 @@
             [ring.util.response :as resp]
             [selmer.parser :refer [render-file]]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
-
 (defroutes all-routes
   (GET "/" [] (resp/resource-response "index.html" {:root "public"}))
   (GET "/home" [] (render-file "templates/home.html" {}))
