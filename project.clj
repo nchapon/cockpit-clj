@@ -10,6 +10,12 @@
                  [ring/ring-defaults "0.1.5"]
                  [com.stuartsierra/component "0.2.3"]
                  [selmer "1.0.0"]]
+
+  ;; nREPL by default starts in the :main namespace, we want to start in `user`
+  ;; because that's where our development helper functions like (run) and
+  ;; (browser-repl) live.
+  :repl-options {:init-ns user}
+
   :profiles {:dev {:plugins [[lein-cljsbuild "1.0.6"]
                              [lein-figwheel "0.3.7"]]
                    :dependencies [[reloaded.repl "0.1.0"]]
