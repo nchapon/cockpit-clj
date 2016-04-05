@@ -9,7 +9,8 @@
                  [compojure "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
                  [com.stuartsierra/component "0.2.3"]
-                 [selmer "1.0.0"]]
+                 [selmer "1.0.0"]
+                 [buddy "0.11.0"]]
 
   ;; nREPL by default starts in the :main namespace, we want to start in `user`
   ;; because that's where our development helper functions like (run) and

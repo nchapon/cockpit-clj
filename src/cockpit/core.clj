@@ -1,11 +1,15 @@
 (ns cockpit.core
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
+            [cockpit.security :as sec]
             [ring.middleware.defaults :refer :all]
             [compojure.handler :only [site]]
             [org.httpkit.server :refer [run-server]]
             [ring.util.response :as resp]
-            [selmer.parser :refer [render render-file]]))
+            [selmer.parser :refer [render render-file]]
+            [buddy.auth.middleware :refer [wrap-authentication]]))
+
+
 
 (defroutes all-routes
   (GET "/" [] (resp/resource-response "index.html" {:root "public"}))
@@ -15,6 +19,13 @@
   (GET "/login" [] (render-file "templates/login.html" {}))
   (route/resources "/")
   (route/not-found "Page not found")) ;; resources should be in resources/public folder
+
+
+(def cockpit-handler
+  (-> #'all-routes
+      (wrap-authentication sec/backend)
+      (wrap-defaults (-> site-defaults (assoc-in [:security :anti-forgery] false)))))
+
 
 (defonce server (atom nil))
 
@@ -26,4 +37,5 @@
     (reset! server nil)))
 
 (defn -main [& args] ;; entry point, lein run will pick up and start from here
-  (reset! server (run-server (wrap-defaults all-routes (-> site-defaults (assoc-in [:security :anti-forgery] false))) {:port 3000})))
+  (reset! server (run-server
+                  cockpit-handler {:port 3000})))
