@@ -1,7 +1,7 @@
 (ns cockpit.system
   (:require [com.stuartsierra.component :as component]
             [org.httpkit.server :refer [run-server]]
-            [cockpit.web :refer [app]]))
+            [cockpit.core :refer [app]]))
 
 
 (defn- start-server [handler port]

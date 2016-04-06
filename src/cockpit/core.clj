@@ -2,17 +2,36 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [cockpit.security :as sec]
+
+            [clojure.java.io :as io]
             [ring.middleware.defaults :refer :all]
             [compojure.handler :only [site]]
             [org.httpkit.server :refer [run-server]]
             [ring.util.response :as resp]
             [selmer.parser :refer [render render-file]]
-            [buddy.auth.middleware :refer [wrap-authentication]]))
+            [buddy.auth :refer [authenticated? throw-unauthorized]]
+            [buddy.auth.backends.session :refer [session-backend]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]))
 
 
+
+;;;;;;;;;;;;;;;;;
+;; Controllers ;;
+;;;;;;;;;;;;;;;;;
+
+(defn home
+  "doc-string"
+  [request]
+  (if-not (authenticated? request)
+    (throw-unauthorized)
+    (render-file "templates/home.html" {})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Routes and middlewares ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defroutes all-routes
-  (GET "/" [] (resp/resource-response "index.html" {:root "public"}))
+  (GET "/" [] home)
   (GET "/home" [] (render-file "templates/home.html" {}))
   (GET "/view" [] (render-file "templates/view.html" {}))
   (POST "/view" {:keys [params]} (render-file "templates/view.html" {:case (:case params)}))
@@ -21,21 +40,35 @@
   (route/not-found "Page not found")) ;; resources should be in resources/public folder
 
 
-(def cockpit-handler
+;; User defined unauthorized handler
+;;
+;; This function is responsible for handling
+;; unauthorized requests (when unauthorized exception
+;; is raised by some handler)
+
+(defn unauthorized-handler
+  [request metadata]
+  (cond
+    ;; If request is authenticated, raise 403 instead
+    ;; of 401 (because user is authenticated but permission
+    ;; denied is raised).
+    (authenticated? request)
+    (-> (render (slurp (io/resource "error.html")) request)
+        (assoc :status 403))
+    ;; In other cases, redirect the user to login page.
+    :else
+    (let [current-url (:uri request)]
+      (resp/redirect (format "/login?next=%s" current-url)))))
+
+;; Create an instance of auth backend.
+
+(def auth-backend
+  (session-backend {:unauthorized-handler unauthorized-handler}))
+
+
+
+(def app
   (-> #'all-routes
-      (wrap-authentication sec/backend)
+      (wrap-authorization auth-backend)
+      (wrap-authentication auth-backend)
       (wrap-defaults (-> site-defaults (assoc-in [:security :anti-forgery] false)))))
-
-
-(defonce server (atom nil))
-
-(defn stop-server []
-  (when-not (nil? @server)
-    ;; graceful shutdown: wait 100ms for existing requests to be finished
-    ;; :timeout is optional, when no timeout, stop immediately
-    (@server :timeout 100)
-    (reset! server nil)))
-
-(defn -main [& args] ;; entry point, lein run will pick up and start from here
-  (reset! server (run-server
-                  cockpit-handler {:port 3000})))
