@@ -2,6 +2,8 @@
   (:require [clojure.test :refer :all]
             [cockpit.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+
+(deftest authenticate-user
+  (testing "Authenticate user with user and password"
+    (is (= "admin" (get-user-by-username-and-password "admin" "secret")))
+    (is (= nil (get-user-by-username-and-password "admin" "")))))

@@ -26,16 +26,49 @@
     (throw-unauthorized)
     (render-file "templates/home.html" {})))
 
+
+(def authdata
+  "Global var that stores valid users with their
+   respective passwords."
+  {:admin "secret"
+   :test "secret"})
+
+(defn get-user-by-username-and-password
+  [username password]
+  (let [found-password (get authdata (keyword username))]
+    (if (= found-password password) username)))
+
+(defn post-login [request]
+   (let [email (get-in request [:form-params "userEmail"])
+        password (get-in request [:form-params "userPassword"])
+        session (:session request)]
+    (if-let [username (get-user-by-username-and-password email password)]
+      (let [next-url (get-in request [:query-params :next] "/")
+            updated-session (assoc session :identity (keyword username))]
+        (-> (resp/redirect next-url)
+            (assoc :session updated-session)))
+      (render-file "templates/login.html"  {}))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Routes and middlewares ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn debug-ring [request]
+  (let [email (get-in request [:form-params "userEmail"])
+        password (get-in request [:form-params "userPassword"])
+        session (:session request)]
+    {:status 200
+     :headers {"Content-Type" "text/html"}
+     :body (str  "Request " request)}))
+
 (defroutes all-routes
   (GET "/" [] home)
-  (GET "/home" [] (render-file "templates/home.html" {}))
+  (GET "/home" [] home)
   (GET "/view" [] (render-file "templates/view.html" {}))
   (POST "/view" {:keys [params]} (render-file "templates/view.html" {:case (:case params)}))
   (GET "/login" [] (render-file "templates/login.html" {}))
+  (POST "/login" [] post-login)
+  (GET "/debug" [] debug-ring)
   (route/resources "/")
   (route/not-found "Page not found")) ;; resources should be in resources/public folder
 
@@ -64,7 +97,6 @@
 
 (def auth-backend
   (session-backend {:unauthorized-handler unauthorized-handler}))
-
 
 
 (def app
