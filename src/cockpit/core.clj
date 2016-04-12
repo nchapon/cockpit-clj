@@ -18,6 +18,10 @@
 ;;;;;;;;;;;;;;;;;
 ;; Controllers ;;
 ;;;;;;;;;;;;;;;;;
+(defn logout
+  [request]
+  (-> (resp/redirect "/login")
+      (assoc :session {})))
 
 (defn home
   "doc-string"
@@ -68,6 +72,7 @@
   (POST "/view" {:keys [params]} (render-file "templates/view.html" {:case (:case params)}))
   (GET "/login" [] (render-file "templates/login.html" {}))
   (POST "/login" [] post-login)
+  (GET "/logout" [] logout)
   (GET "/debug" [] debug-ring)
   (route/resources "/")
   (route/not-found "Page not found")) ;; resources should be in resources/public folder
