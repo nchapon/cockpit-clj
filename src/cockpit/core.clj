@@ -39,23 +39,23 @@
     (if (= found-password password) username)))
 
 (defn post-login [request]
-   (let [email (get-in request [:form-params "userEmail"])
-        password (get-in request [:form-params "userPassword"])
+   (let [email (get-in request [:form-params "email"])
+        password (get-in request [:form-params "password"])
         session (:session request)]
     (if-let [username (get-user-by-username-and-password email password)]
       (let [next-url (get-in request [:query-params :next] "/")
             updated-session (assoc session :identity (keyword username))]
         (-> (resp/redirect next-url)
             (assoc :session updated-session)))
-      (render-file "templates/login.html"  {}))))
+      (render-file "templates/login.html"  {:message "Erreur Authentification"}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Routes and middlewares ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn debug-ring [request]
-  (let [email (get-in request [:form-params "userEmail"])
-        password (get-in request [:form-params "userPassword"])
+  (let [email (get-in request [:form-params "email"])
+        password (get-in request [:form-params "password"])
         session (:session request)]
     {:status 200
      :headers {"Content-Type" "text/html"}
