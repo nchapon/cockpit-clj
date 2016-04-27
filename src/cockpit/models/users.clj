@@ -18,10 +18,11 @@
 
 
 (defn password-matches?
-  "doc-string"
+  "Password Matches"
   [email password]
   (reduce (fn [_ user]
             (if (and (= email (:email user))
-                     (hashers/check password (:password user)))
+                     (hashers/check password (:password-hash user)))
               (reduced user)))
+          {}
           (vals @userstore)))

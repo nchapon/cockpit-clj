@@ -2,7 +2,7 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [cockpit.security :as sec]
-
+            [cockpit.models.users :as users]
             [clojure.java.io :as io]
             [ring.middleware.defaults :refer :all]
             [compojure.handler :only [site]]
@@ -31,24 +31,13 @@
     (render-file "templates/home.html" {})))
 
 
-(def authdata
-  "Global var that stores valid users with their
-   respective passwords."
-  {:admin "secret"
-   :test "secret"})
-
-(defn get-user-by-username-and-password
-  [username password]
-  (let [found-password (get authdata (keyword username))]
-    (if (= found-password password) username)))
-
 (defn post-login [request]
    (let [email (get-in request [:form-params "email"])
         password (get-in request [:form-params "password"])
-        session (:session request)]
-    (if-let [username (get-user-by-username-and-password email password)]
+         session (:session request)]
+     (if (not-empty (users/password-matches? email password))
       (let [next-url (get-in request [:query-params :next] "/")
-            updated-session (assoc session :identity (keyword username))]
+            updated-session (assoc session :identity email)]
         (-> (resp/redirect next-url)
             (assoc :session updated-session)))
       (render-file "templates/login.html"  {:message "Erreur Authentification"}))))
@@ -99,10 +88,8 @@
       (resp/redirect (format "/login?next=%s" current-url)))))
 
 ;; Create an instance of auth backend.
-
 (def auth-backend
   (session-backend {:unauthorized-handler unauthorized-handler}))
-
 
 (def app
   (-> #'all-routes
